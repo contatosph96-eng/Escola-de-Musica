@@ -26,13 +26,18 @@ def salvar_json(dados):
 
 
 def gerar_dh_code(texto_dia_horario):
-  """Converte a descrição do dia/horário para o padrão da Coluna B (ex: 1,13).
+  """Converte o texto digitado.
 
-  Regra: 1 = Segunda, 3 = Terça, 2 = Quarta.
+  Se contiver 'le' ou 'lista', define como 'Lista de Espera'. Caso contrário,
+  aplica a formatação padrão da coluna B.
   """
   texto = texto_dia_horario.lower().strip()
-  prefixo = "1"  # Padrão Segunda
 
+  # Se o usuário digitar 'le' ou 'lista de espera'
+  if "le" in texto or "lista" in texto:
+    return "Lista de Espera"
+
+  prefixo = "1"  # Padrão Segunda
   if "terça" in texto or "terca" in texto:
     prefixo = "3"
   elif "quarta" in texto:
@@ -79,10 +84,9 @@ def post_alunos():
     dados_locais = carregar_json()
     acao = req.get("action")
 
-    # Gera o código formatado para a coluna B (ex: 1,13)
     texto_dia = req.get("diaHorario", "")
     dh_code_gerado = gerar_dh_code(texto_dia)
-    req["dhCode"] = dh_code_gerado  # Adiciona ao payload enviado para o Apps Script
+    req["dhCode"] = dh_code_gerado
 
     if acao == "delete":
       row_id = req.get("rowId")
