@@ -155,7 +155,7 @@
                     </div>
                     <div class="form-group">
                         <label>Horário / Escreva "le" p/ Lista de Espera</label>
-                        <input type="text" id="diaHorario" required placeholder="Ex: 1,10 ou le">
+                        <input type="text" id="diaHorario" required placeholder="Ex: Segunda-Feira 10h ou le">
                     </div>
                     <div class="form-group">
                         <label>Instrumento</label>
@@ -232,6 +232,37 @@
             }
         }
 
+        // Função auxiliar para converter o código (ex: "1,10") para o formato por extenso ("Segunda-Feira 10h")
+        function formatarDH(dhCode, diaHorarioOriginal) {
+            if (!dhCode) return diaHorarioOriginal || 'Sem Horário';
+            
+            const codigo = dhCode.toString().trim();
+            if (codigo.toLowerCase().includes("lista") || codigo.toLowerCase() === "le") {
+                return "Lista de Espera";
+            }
+
+            // Se já vier por extenso, retorna direto
+            if (isNaN(codigo.replace(',', '.'))) {
+                return codigo;
+            }
+
+            const partes = codigo.split(',');
+            if (partes.length === 2) {
+                const prefixo = partes[0].trim();
+                const hora = partes[1].trim();
+
+                let diaSemana = "";
+                if (prefixo === "1") diaSemana = "Segunda-Feira";
+                else if (prefixo === "3") diaSemana = "Terça-Feira";
+                else if (prefixo === "2") diaSemana = "Quarta-Feira";
+                else diaSemana = "Dia " + prefixo;
+
+                return `${diaSemana} ${hora}h`;
+            }
+
+            return codigo;
+        }
+
         function atualizarEstatisticas() {
             let ativos = 0;
             let espera = 0;
@@ -279,17 +310,20 @@
                     statusBadge = `<span class="badge-status badge-inativo">○ Sem Horário</span>`;
                 }
 
+                // Exibe o horário traduzido/por extenso na tabela
+                const textoDHFormatado = formatarDH(s.dhCode, s.diaHorario);
+
                 tbody.innerHTML += `
                     <tr>
                         <td>${idx + 1}</td>
                         <td><strong>${s.nome}</strong></td>
-                        <td>📅 ${s.dhCode || s.diaHorario || 'Sem Horário'}</td>
+                        <td>📅 ${textoDHFormatado}</td>
                         <td>🎸 ${s.instrumento || '-'}</td>
                         <td>📱 ${s.telefone || '-'}</td>
                         <td>${statusBadge}</td>
                         <td>
                             <div class="action-btns">
-                                <button class="btn-action btn-edit" onclick="prepararEdicao(${s.rowId}, '${s.nome.replace(/'/g, "\\'")}', '${(s.dhCode || s.diaHorario || '').replace(/'/g, "\\'")}', '${s.instrumento}', '${s.telefone || ''}')">Editar</button>
+                                <button class="btn-action btn-edit" onclick="prepararEdicao(${s.rowId}, '${s.nome.replace(/'/g, "\\'")}', '${textoDHFormatado.replace(/'/g, "\\'")}', '${s.instrumento}', '${s.telefone || ''}')">Editar</button>
                                 <button class="btn-action btn-delete" onclick="deleteStudent(${s.rowId})">Excluir</button>
                             </div>
                         </td>
