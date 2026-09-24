@@ -176,7 +176,11 @@
             const search = document.getElementById('searchName').value.toLowerCase();
             const filterInst = document.getElementById('filterInstrument').value;
 
+            // Filtra os alunos
             const filtered = alunosGlobais.filter(s => s.nome.toLowerCase().includes(search) && (filterInst === "" || s.instrumento === filterInst));
+
+            // Ordena estritamente em Ordem Alfabética (A-Z)
+            filtered.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
 
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Nenhum aluno encontrado.</td></tr>`;
