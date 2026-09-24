@@ -17,6 +17,7 @@
             --danger: #ef4444;
             --success: #10b981;
             --warning: #f59e0b;
+            --purple: #8b5cf6;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
@@ -37,10 +38,10 @@
         .page-header { margin-bottom: 25px; }
         .page-header h1 { font-size: 1.75rem; color: var(--text-main); font-weight: 700; }
 
-        /* Estilo dos Cards de Estatísticas */
+        /* Estilo dos Cards de Estatísticas (3 colunas agora) */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
             margin-bottom: 25px;
         }
@@ -55,10 +56,11 @@
             border-left: 5px solid var(--primary-color);
         }
         .stat-card.active { border-left-color: var(--success); }
+        .stat-card.waiting { border-left-color: var(--purple); }
         .stat-card.inactive { border-left-color: var(--warning); }
         .stat-icon { font-size: 2rem; }
-        .stat-info h4 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-info span { font-size: 1.75rem; font-weight: 700; color: var(--text-main); }
+        .stat-info h4 { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-info span { font-size: 1.6rem; font-weight: 700; color: var(--text-main); }
 
         .card-table, .card-form {
             background: var(--card-bg); border-radius: 12px;
@@ -82,6 +84,7 @@
             border-radius: 20px; font-size: 0.8rem; font-weight: 600;
         }
         .badge-ativo { background: #d1fae5; color: #065f46; }
+        .badge-espera { background: #ede9fe; color: #6d28d9; }
         .badge-inativo { background: #fef3c7; color: #92400e; }
 
         .btn-icon { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--text-muted); transition: color 0.2s; }
@@ -111,7 +114,7 @@
             <h1>Gerenciamento e Cadastros</h1>
         </div>
 
-        <!-- Caixas de Estatísticas / Resumo -->
+        <!-- Caixas de Estatísticas Atualizadas -->
         <div class="stats-grid">
             <div class="stat-card active">
                 <div class="stat-icon">🟢</div>
@@ -120,10 +123,17 @@
                     <span id="countAtivos">0</span>
                 </div>
             </div>
+            <div class="stat-card waiting">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-info">
+                    <h4>Lista de Espera</h4>
+                    <span id="countEspera">0</span>
+                </div>
+            </div>
             <div class="stat-card inactive">
                 <div class="stat-icon">⚪</div>
                 <div class="stat-info">
-                    <h4>Alunos Desativados</h4>
+                    <h4>Desativados / Sem Horário</h4>
                     <span id="countInativos">0</span>
                 </div>
             </div>
@@ -138,8 +148,8 @@
                         <input type="text" id="nome" required placeholder="Ex: Sofia Mendes">
                     </div>
                     <div class="form-group">
-                        <label>Código D/H (Ex: 1,10 ou 2,14)</label>
-                        <input type="text" id="diaHorario" required placeholder="Ex: 1,10">
+                        <label>Horário / Escreva "le" p/ Lista de Espera</label>
+                        <input type="text" id="diaHorario" required placeholder="Ex: 1,10 ou le">
                     </div>
                     <div class="form-group">
                         <label>Instrumento</label>
@@ -183,7 +193,7 @@
                         <tr>
                             <th>#</th>
                             <th>Aluno</th>
-                            <th>Horário (D/H)</th>
+                            <th>Registro (D/H)</th>
                             <th>Instrumento</th>
                             <th>Status</th>
                             <th>Ações</th>
@@ -214,13 +224,15 @@
 
         function atualizarEstatisticas() {
             let ativos = 0;
+            let espera = 0;
             let inativos = 0;
 
             alunosGlobais.forEach(s => {
                 const dh = s.dhCode ? s.dhCode.trim().toLowerCase() : (s.diaHorario ? s.diaHorario.trim().toLowerCase() : "");
-                const temHorario = dh !== "" && !dh.includes("inválido") && !dh.includes("numero");
                 
-                if (temHorario) {
+                if (dh.includes("lista de espera") || dh === "le") {
+                    espera++;
+                } else if (dh !== "" && !dh.includes("inválido") && !dh.includes("numero")) {
                     ativos++;
                 } else {
                     inativos++;
@@ -228,6 +240,7 @@
             });
 
             document.getElementById('countAtivos').textContent = ativos;
+            document.getElementById('countEspera').textContent = espera;
             document.getElementById('countInativos').textContent = inativos;
         }
 
@@ -246,11 +259,15 @@
 
             filtered.forEach((s, idx) => {
                 const dh = s.dhCode ? s.dhCode.trim().toLowerCase() : (s.diaHorario ? s.diaHorario.trim().toLowerCase() : "");
-                const temHorario = dh !== "" && !dh.includes("inválido") && !dh.includes("numero");
                 
-                const statusBadge = temHorario 
-                    ? `<span class="badge-status badge-ativo">● Ativo</span>` 
-                    : `<span class="badge-status badge-inativo">○ Sem Horário</span>`;
+                let statusBadge = "";
+                if (dh.includes("lista de espera") || dh === "le") {
+                    statusBadge = `<span class="badge-status badge-espera">⏳ Lista de Espera</span>`;
+                } else if (dh !== "" && !dh.includes("inválido") && !dh.includes("numero")) {
+                    statusBadge = `<span class="badge-status badge-ativo">● Ativo</span>`;
+                } else {
+                    statusBadge = `<span class="badge-status badge-inativo">○ Sem Horário</span>`;
+                }
 
                 tbody.innerHTML += `
                     <tr>
