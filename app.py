@@ -42,7 +42,7 @@ def escala():
 @app.route("/api/alunos", methods=["GET"])
 def get_alunos():
   try:
-    response = requests.get(WEB_APP_URL, allow_redirects=True, timeout=3)
+    response = requests.get(WEB_APP_URL, allow_redirects=True, timeout=5)
     data = response.json()
     if isinstance(data, list) and len(data) > 0:
       salvar_json(data)
@@ -51,11 +51,15 @@ def get_alunos():
 
   dados_brutos = carregar_json()
 
-  # Filtra para retornar APENAS alunos com horário válido (ignora vazios ou "Número Inválido")
-  dados_filtrados = [
-      s for s in dados_brutos 
-      if s.get("diaHorario") and "inválido" not in s.get("diaHorario").lower()
-  ]
+  # Filtro flexível: garante que só traz alunos com nome e com horário preenchido que não seja inválido
+  dados_filtrados = []
+  for s in dados_brutos:
+    nome = str(s.get("nome", "")).strip()
+    dh = str(s.get("diaHorario", "")).strip().lower()
+
+    # Verifica se tem nome e se o horário NÃO é vazio, NÃO é "número inválido" e NÃO é "inválido"
+    if nome and dh and "inválido" not in dh and "numero" not in dh:
+      dados_filtrados.append(s)
 
   return jsonify(dados_filtrados)
 
