@@ -94,19 +94,25 @@
         function filtrarEExibir() {
             const termo = document.getElementById('searchInput').value.toLowerCase();
             
-            // Filtra de acordo com a busca
-            const filtrados = todosAlunos.filter(s => 
+            // 1. Filtro estrito para alunos: Exclui registros sem horário ou com horários inválidos
+            const apenasComHorario = todosAlunos.filter(s => {
+                const dh = s.diaHorario ? s.diaHorario.trim().toLowerCase() : "";
+                return dh !== "" && !dh.includes("inválido") && !dh.includes("numero");
+            });
+
+            // 2. Filtra de acordo com a barra de pesquisa (nome, instrumento ou horário)
+            const filtrados = apenasComHorario.filter(s => 
                 s.nome.toLowerCase().includes(termo) || s.instrumento.toLowerCase().includes(termo) || s.diaHorario.toLowerCase().includes(termo)
             );
 
-            // Ordena estritamente em Ordem Alfabética pelo nome (A-Z)
+            // 3. Ordena estritamente em Ordem Alfabética pelo nome (A-Z)
             filtrados.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
 
             const container = document.getElementById('listaAlunos');
             container.innerHTML = '';
 
             if (filtrados.length === 0) {
-                container.innerHTML = `<div class="no-result">Nenhum aluno encontrado.</div>`;
+                container.innerHTML = `<div class="no-result">Nenhum aluno com horário reservado encontrado.</div>`;
                 return;
             }
 
