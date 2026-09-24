@@ -38,7 +38,7 @@
         .page-header { margin-bottom: 25px; }
         .page-header h1 { font-size: 1.75rem; color: var(--text-main); font-weight: 700; }
 
-        /* Estilo dos Cards de Estatísticas (3 colunas agora) */
+        /* Estilo dos Cards de Estatísticas */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -87,8 +87,12 @@
         .badge-espera { background: #ede9fe; color: #6d28d9; }
         .badge-inativo { background: #fef3c7; color: #92400e; }
 
-        .btn-icon { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--text-muted); transition: color 0.2s; }
-        .btn-icon.delete:hover { color: var(--danger); }
+        .action-btns { display: flex; gap: 8px; }
+        .btn-action { padding: 5px 10px; border-radius: 6px; border: none; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: white; }
+        .btn-edit { background-color: var(--warning); }
+        .btn-edit:hover { background-color: #d97706; }
+        .btn-delete { background-color: var(--danger); }
+        .btn-delete:hover { background-color: #dc2626; }
 
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
         .form-group { display: flex; flex-direction: column; }
@@ -99,6 +103,7 @@
             font-weight: 600; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-top: 15px;
         }
         .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-cancel { background-color: #64748b; margin-left: 10px; display: none; }
         .loading { text-align: center; color: var(--text-muted); padding: 30px; }
     </style>
 </head>
@@ -111,10 +116,10 @@
 
     <div class="main-container">
         <div class="page-header">
-            <h1>Gerenciamento e Cadastros</h1>
+            <h1 id="formTitle">Gerenciamento e Cadastros</h1>
         </div>
 
-        <!-- Caixas de Estatísticas Atualizadas -->
+        <!-- Caixas de Estatísticas -->
         <div class="stats-grid">
             <div class="stat-card active">
                 <div class="stat-icon">🟢</div>
@@ -140,8 +145,9 @@
         </div>
 
         <div class="card-form">
-            <h3 style="font-size: 1.1rem; color: var(--text-main);">Registrar Nova Aula / Aluno</h3>
+            <h3 id="cardFormTitle" style="font-size: 1.1rem; color: var(--text-main);">Registrar Nova Aula / Aluno</h3>
             <form id="studentForm">
+                <input type="hidden" id="editRowId">
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Nome do Aluno</label>
@@ -167,7 +173,10 @@
                         <input type="text" id="telefone" required placeholder="(33) 99999-9999">
                     </div>
                 </div>
-                <button type="submit" class="btn-primary" id="btnSubmit">Salvar Registro</button>
+                <div>
+                    <button type="submit" class="btn-primary" id="btnSubmit">Salvar Registro</button>
+                    <button type="button" class="btn-primary btn-cancel" id="btnCancel" onclick="cancelarEdicao()">Cancelar Edição</button>
+                </div>
             </form>
         </div>
 
@@ -195,12 +204,13 @@
                             <th>Aluno</th>
                             <th>Registro (D/H)</th>
                             <th>Instrumento</th>
+                            <th>Telefone</th>
                             <th>Status</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <tr><td colspan="6" class="loading">Carregando lista de alunos...</td></tr>
+                        <tr><td colspan="7" class="loading">Carregando lista de alunos...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -218,7 +228,7 @@
                 renderTable();
             } catch (err) {
                 console.error("Erro ao carregar:", err);
-                document.getElementById('tableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger);">Erro ao carregar dados.</td></tr>`;
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--danger);">Erro ao carregar dados.</td></tr>`;
             }
         }
 
@@ -253,7 +263,7 @@
             const filtered = alunosGlobais.filter(s => s.nome.toLowerCase().includes(search) && (filterInst === "" || s.instrumento === filterInst));
 
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Nenhum aluno encontrado.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Nenhum aluno encontrado.</td></tr>`;
                 return;
             }
 
@@ -275,8 +285,14 @@
                         <td><strong>${s.nome}</strong></td>
                         <td>📅 ${s.dhCode || s.diaHorario || 'Sem Horário'}</td>
                         <td>🎸 ${s.instrumento || '-'}</td>
+                        <td>📱 ${s.telefone || '-'}</td>
                         <td>${statusBadge}</td>
-                        <td><button class="btn-icon delete" title="Excluir" onclick="deleteStudent(${s.rowId})">🗑️</button></td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-action btn-edit" onclick="prepararEdicao(${s.rowId}, '${s.nome.replace(/'/g, "\\'")}', '${(s.dhCode || s.diaHorario || '').replace(/'/g, "\\'")}', '${s.instrumento}', '${s.telefone || ''}')">Editar</button>
+                                <button class="btn-action btn-delete" onclick="deleteStudent(${s.rowId})">Excluir</button>
+                            </div>
+                        </td>
                     </tr>`;
             });
         }
@@ -284,9 +300,15 @@
         document.getElementById('studentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('btnSubmit');
-            btn.disabled = true; btn.textContent = 'Salvando...';
+            const rowId = document.getElementById('editRowId').value;
+            const isEditing = rowId !== "";
+
+            btn.disabled = true;
+            btn.textContent = isEditing ? 'Atualizando...' : 'Salvando...';
 
             const payload = {
+                action: isEditing ? "edit" : "add",
+                rowId: isEditing ? parseInt(rowId) : null,
                 nome: document.getElementById('nome').value,
                 diaHorario: document.getElementById('diaHorario').value,
                 instrumento: document.getElementById('instrumento').value,
@@ -299,8 +321,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                alert('Salvo com sucesso!');
-                this.reset();
+                alert(isEditing ? 'Atualizado com sucesso!' : 'Salvo com sucesso!');
+                cancelarEdicao();
                 fetchStudents();
             } catch (err) {
                 alert('Erro ao salvar.');
@@ -309,6 +331,27 @@
                 btn.textContent = 'Salvar Registro';
             }
         });
+
+        function prepararEdicao(rowId, nome, diaHorario, instrumento, telefone) {
+            document.getElementById('editRowId').value = rowId;
+            document.getElementById('nome').value = nome;
+            document.getElementById('diaHorario').value = diaHorario;
+            document.getElementById('instrumento').value = instrumento;
+            document.getElementById('telefone').value = telefone;
+
+            document.getElementById('cardFormTitle').innerText = "Editar Aluno / Registro";
+            document.getElementById('btnSubmit').innerText = "Atualizar Registro";
+            document.getElementById('btnCancel').style.display = "inline-block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicao() {
+            document.getElementById('studentForm').reset();
+            document.getElementById('editRowId').value = "";
+            document.getElementById('cardFormTitle').innerText = "Registrar Nova Aula / Aluno";
+            document.getElementById('btnSubmit').innerText = "Salvar Registro";
+            document.getElementById('btnCancel').style.display = "none";
+        }
 
         async function deleteStudent(rowId) {
             if (!confirm("Deseja realmente remover este aluno?")) return;
