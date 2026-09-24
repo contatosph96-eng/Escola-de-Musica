@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academia Harmonia - Painel Admin</title>
+    <title>Academia Harmonia - Painel Administrativo</title>
     <style>
         :root {
             --nav-bg: #1e293b;
@@ -15,51 +15,77 @@
             --text-muted: #64748b;
             --border-color: #e2e8f0;
             --danger: #ef4444;
+            --success: #10b981;
             --warning: #f59e0b;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; }
+        body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding-bottom: 40px; }
 
         .navbar {
-            background-color: var(--nav-bg); color: white; padding: 15px 30px;
+            background-color: var(--nav-bg); color: white; padding: 16px 40px;
             display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .navbar .brand { font-size: 1.25rem; font-weight: 700; }
+        .navbar .brand { font-size: 1.2rem; font-weight: 700; }
         .btn-home {
             background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);
-            padding: 6px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; cursor: pointer; text-decoration: none; transition: background 0.2s;
+            padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; text-decoration: none;
         }
         .btn-home:hover { background: rgba(255,255,255,0.2); }
 
         .main-container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
-        .page-header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .page-header { margin-bottom: 25px; }
         .page-header h1 { font-size: 1.75rem; color: var(--text-main); font-weight: 700; }
-        
+
+        /* Estilo dos Cards de Estatísticas */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-left: 5px solid var(--primary-color);
+        }
+        .stat-card.active { border-left-color: var(--success); }
+        .stat-card.inactive { border-left-color: var(--warning); }
+        .stat-icon { font-size: 2rem; }
+        .stat-info h4 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-info span { font-size: 1.75rem; font-weight: 700; color: var(--text-main); }
+
         .card-table, .card-form {
             background: var(--card-bg); border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 24px; margin-bottom: 30px;
         }
         .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         .table-title { font-size: 1.15rem; font-weight: 600; color: var(--text-main); }
+
         .filters-group { display: flex; gap: 10px; flex-wrap: wrap; }
         .filters-group input, .filters-group select {
             padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; background: #f8fafc;
         }
+
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th, td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
         th { background-color: #f8fafc; font-weight: 600; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
         tr:hover { background-color: #f8fafc; }
+
         .badge-status {
             display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
-            border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: #d1fae5; color: #065f46;
+            border-radius: 20px; font-size: 0.8rem; font-weight: 600;
         }
-        .action-btns { display: flex; gap: 8px; }
-        .btn-action { padding: 5px 10px; border-radius: 6px; border: none; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: white; }
-        .btn-edit { background-color: var(--warning); }
-        .btn-edit:hover { background-color: #d97706; }
-        .btn-delete { background-color: var(--danger); }
-        .btn-delete:hover { background-color: #dc2626; }
+        .badge-ativo { background: #d1fae5; color: #065f46; }
+        .badge-inativo { background: #fef3c7; color: #92400e; }
+
+        .btn-icon { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--text-muted); transition: color 0.2s; }
+        .btn-icon.delete:hover { color: var(--danger); }
 
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
         .form-group { display: flex; flex-direction: column; }
@@ -70,32 +96,50 @@
             font-weight: 600; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-top: 15px;
         }
         .btn-primary:hover { background-color: var(--primary-hover); }
-        .btn-cancel { background-color: #64748b; margin-left: 10px; display: none; }
+        .loading { text-align: center; color: var(--text-muted); padding: 30px; }
     </style>
 </head>
 <body>
 
     <nav class="navbar">
-        <div class="brand">Academia Harmonia — Painel Admin</div>
+        <div class="brand">Academia Harmonia — Painel Administrativo</div>
         <a href="/" class="btn-home">⌂ Home (Sair)</a>
     </nav>
 
     <div class="main-container">
         <div class="page-header">
-            <h1 id="formTitle">Cadastrar Nova Aula</h1>
+            <h1>Gerenciamento e Cadastros</h1>
+        </div>
+
+        <!-- Caixas de Estatísticas / Resumo -->
+        <div class="stats-grid">
+            <div class="stat-card active">
+                <div class="stat-icon">🟢</div>
+                <div class="stat-info">
+                    <h4>Alunos Ativos</h4>
+                    <span id="countAtivos">0</span>
+                </div>
+            </div>
+            <div class="stat-card inactive">
+                <div class="stat-icon">⚪</div>
+                <div class="stat-info">
+                    <h4>Alunos Desativados</h4>
+                    <span id="countInativos">0</span>
+                </div>
+            </div>
         </div>
 
         <div class="card-form">
+            <h3 style="font-size: 1.1rem; color: var(--text-main);">Registrar Nova Aula / Aluno</h3>
             <form id="studentForm">
-                <input type="hidden" id="editRowId">
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Nome do Aluno</label>
                         <input type="text" id="nome" required placeholder="Ex: Sofia Mendes">
                     </div>
                     <div class="form-group">
-                        <label>Dia / Horário (Ex: Segunda-Feira 10h)</label>
-                        <input type="text" id="diaHorario" required placeholder="Ex: Segunda-Feira 10h">
+                        <label>Código D/H (Ex: 1,10 ou 2,14)</label>
+                        <input type="text" id="diaHorario" required placeholder="Ex: 1,10">
                     </div>
                     <div class="form-group">
                         <label>Instrumento</label>
@@ -113,16 +157,13 @@
                         <input type="text" id="telefone" required placeholder="(33) 99999-9999">
                     </div>
                 </div>
-                <div>
-                    <button type="submit" class="btn-primary" id="btnSubmit">Salvar na Planilha</button>
-                    <button type="button" class="btn-primary btn-cancel" id="btnCancel" onclick="cancelarEdicao()">Cancelar Edição</button>
-                </div>
+                <button type="submit" class="btn-primary" id="btnSubmit">Salvar Registro</button>
             </form>
         </div>
 
         <div class="card-table">
             <div class="table-header-row">
-                <div class="table-title">Lista de Alunos Sincronizados</div>
+                <div class="table-title">Alunos Matriculados</div>
                 <div class="filters-group">
                     <input type="text" id="searchName" placeholder="Pesquisar Aluno..." oninput="renderTable()">
                     <select id="filterInstrument" onchange="renderTable()">
@@ -142,15 +183,14 @@
                         <tr>
                             <th>#</th>
                             <th>Aluno</th>
-                            <th>Horário</th>
+                            <th>Horário (D/H)</th>
                             <th>Instrumento</th>
-                            <th>Telefone</th>
                             <th>Status</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Carregando dados...</td></tr>
+                        <tr><td colspan="6" class="loading">Carregando lista de alunos...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -164,10 +204,31 @@
             try {
                 const res = await fetch('/api/alunos');
                 alunosGlobais = await res.json();
+                atualizarEstatisticas();
                 renderTable();
             } catch (err) {
                 console.error("Erro ao carregar:", err);
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--danger);">Erro ao carregar dados.</td></tr>`;
             }
+        }
+
+        function atualizarEstatisticas() {
+            let ativos = 0;
+            let inativos = 0;
+
+            alunosGlobais.forEach(s => {
+                const dh = s.dhCode ? s.dhCode.trim().toLowerCase() : (s.diaHorario ? s.diaHorario.trim().toLowerCase() : "");
+                const temHorario = dh !== "" && !dh.includes("inválido") && !dh.includes("numero");
+                
+                if (temHorario) {
+                    ativos++;
+                } else {
+                    inativos++;
+                }
+            });
+
+            document.getElementById('countAtivos').textContent = ativos;
+            document.getElementById('countInativos').textContent = inativos;
         }
 
         function renderTable() {
@@ -176,32 +237,29 @@
             const search = document.getElementById('searchName').value.toLowerCase();
             const filterInst = document.getElementById('filterInstrument').value;
 
-            // Filtra os alunos
             const filtered = alunosGlobais.filter(s => s.nome.toLowerCase().includes(search) && (filterInst === "" || s.instrumento === filterInst));
 
-            // Ordena estritamente em Ordem Alfabética (A-Z)
-            filtered.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
-
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Nenhum aluno encontrado.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Nenhum aluno encontrado.</td></tr>`;
                 return;
             }
 
             filtered.forEach((s, idx) => {
+                const dh = s.dhCode ? s.dhCode.trim().toLowerCase() : (s.diaHorario ? s.diaHorario.trim().toLowerCase() : "");
+                const temHorario = dh !== "" && !dh.includes("inválido") && !dh.includes("numero");
+                
+                const statusBadge = temHorario 
+                    ? `<span class="badge-status badge-ativo">● Ativo</span>` 
+                    : `<span class="badge-status badge-inativo">○ Sem Horário</span>`;
+
                 tbody.innerHTML += `
                     <tr>
                         <td>${idx + 1}</td>
                         <td><strong>${s.nome}</strong></td>
-                        <td>📅 ${s.diaHorario}</td>
-                        <td>🎸 ${s.instrumento}</td>
-                        <td>📱 ${s.telefone || '-'}</td>
-                        <td><span class="badge-status">● Sincronizado</span></td>
-                        <td>
-                            <div class="action-btns">
-                                <button class="btn-action btn-edit" onclick="prepararEdicao(${s.rowId}, '${s.nome.replace(/'/g, "\\'")}', '${s.diaHorario.replace(/'/g, "\\'")}', '${s.instrumento}', '${s.telefone || ''}')">Editar</button>
-                                <button class="btn-action btn-delete" onclick="deleteStudent(${s.rowId})">Excluir</button>
-                            </div>
-                        </td>
+                        <td>📅 ${s.dhCode || s.diaHorario || 'Sem Horário'}</td>
+                        <td>🎸 ${s.instrumento || '-'}</td>
+                        <td>${statusBadge}</td>
+                        <td><button class="btn-icon delete" title="Excluir" onclick="deleteStudent(${s.rowId})">🗑️</button></td>
                     </tr>`;
             });
         }
@@ -209,15 +267,9 @@
         document.getElementById('studentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = document.getElementById('btnSubmit');
-            const rowId = document.getElementById('editRowId').value;
-            const isEditing = rowId !== "";
-
-            btn.disabled = true;
-            btn.textContent = isEditing ? 'Atualizando...' : 'Salvando na Planilha...';
+            btn.disabled = true; btn.textContent = 'Salvando...';
 
             const payload = {
-                action: isEditing ? "edit" : "add",
-                rowId: isEditing ? parseInt(rowId) : null,
                 nome: document.getElementById('nome').value,
                 diaHorario: document.getElementById('diaHorario').value,
                 instrumento: document.getElementById('instrumento').value,
@@ -225,65 +277,34 @@
             };
 
             try {
-                const response = await fetch('/api/alunos', {
+                await fetch('/api/alunos', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                const result = await response.json();
-                if(result.result === 'success') {
-                    alert(isEditing ? 'Aluno atualizado com sucesso!' : 'Aluno cadastrado com sucesso!'); 
-                    cancelarEdicao();
-                    fetchStudents();
-                } else {
-                    alert('Erro: ' + result.message);
-                }
-            } catch (err) { 
-                alert('Erro de comunicação.'); 
-            } finally { 
-                btn.disabled = false; 
-                btn.textContent = 'Salvar na Planilha'; 
+                alert('Salvo com sucesso!');
+                this.reset();
+                fetchStudents();
+            } catch (err) {
+                alert('Erro ao salvar.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Salvar Registro';
             }
         });
-
-        function prepararEdicao(rowId, nome, diaHorario, instrumento, telefone) {
-            document.getElementById('editRowId').value = rowId;
-            document.getElementById('nome').value = nome;
-            document.getElementById('diaHorario').value = diaHorario;
-            document.getElementById('instrumento').value = instrumento;
-            document.getElementById('telefone').value = telefone;
-
-            document.getElementById('formTitle').innerText = "Editar Aluno / Aula";
-            document.getElementById('btnSubmit').innerText = "Atualizar Registro";
-            document.getElementById('btnCancel').style.display = "inline-block";
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function cancelarEdicao() {
-            document.getElementById('studentForm').reset();
-            document.getElementById('editRowId').value = "";
-            document.getElementById('formTitle').innerText = "Cadastrar Nova Aula";
-            document.getElementById('btnSubmit').innerText = "Salvar na Planilha";
-            document.getElementById('btnCancel').style.display = "none";
-        }
 
         async function deleteStudent(rowId) {
             if (!confirm("Deseja realmente remover este aluno?")) return;
             try {
-                const response = await fetch('/api/alunos', {
+                await fetch('/api/alunos', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: "delete", rowId })
                 });
-                const result = await response.json();
-                if(result.result === 'success') {
-                    alert('Aluno removido!');
-                    fetchStudents();
-                } else {
-                    alert('Erro ao excluir.');
-                }
-            } catch (err) { 
-                alert('Erro de comunicação.'); 
+                alert('Removido com sucesso!');
+                fetchStudents();
+            } catch (err) {
+                alert('Erro ao excluir.');
             }
         }
 
