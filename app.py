@@ -49,19 +49,8 @@ def get_alunos():
   except Exception as e:
     print("Modo Offline / Usando JSON local:", e)
 
-  dados_brutos = carregar_json()
-
-  # Filtro flexível: garante que só traz alunos com nome e com horário preenchido que não seja inválido
-  dados_filtrados = []
-  for s in dados_brutos:
-    nome = str(s.get("nome", "")).strip()
-    dh = str(s.get("diaHorario", "")).strip().lower()
-
-    # Verifica se tem nome e se o horário NÃO é vazio, NÃO é "número inválido" e NÃO é "inválido"
-    if nome and dh and "inválido" not in dh and "numero" not in dh:
-      dados_filtrados.append(s)
-
-  return jsonify(dados_filtrados)
+  # Retorna todos os dados para que o Admin gerencie tudo
+  return jsonify(carregar_json())
 
 
 @app.route("/api/alunos", methods=["POST"])
