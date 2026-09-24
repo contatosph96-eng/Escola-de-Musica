@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academia Harmonia - Escala de Alunos</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: #050505; color: #f3f4f6; min-height: 100vh; padding-bottom: 50px; }
+
+        .navbar {
+            background-color: #0a0a0a; border-bottom: 1px solid #1f1f1f; padding: 16px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .navbar .brand { font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff; }
+        .btn-home {
+            background: transparent; color: #fff; border: 1px solid #333;
+            padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.85rem;
+            cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;
+        }
+        .btn-home:hover { background: #222; }
+
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .header-section {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #1f1f1f; padding-bottom: 25px; margin-bottom: 35px; flex-wrap: wrap; gap: 20px;
+        }
+        .header-section h1 { font-size: 2rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #fff; }
+        .header-section p { color: #777; font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; margin-top: 5px; }
+
+        .search-bar {
+            width: 100%; max-width: 300px; padding: 12px 18px; background: #111;
+            border: 1px solid #222; border-radius: 8px; color: #fff; font-size: 0.95rem; outline: none;
+        }
+        .search-bar:focus { border-color: #fff; }
+
+        /* Estilo da Lista em Ordem Alfabética */
+        .list-container {
+            background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 12px; overflow: hidden;
+        }
+        .list-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 18px 24px; border-bottom: 1px solid #161616; transition: background 0.2s;
+        }
+        .list-item:last-child { border-bottom: none; }
+        .list-item:hover { background: #141414; }
+
+        .item-info { display: flex; flex-direction: column; gap: 4px; }
+        .item-nome { font-size: 1.15rem; font-weight: 700; color: #fff; }
+        .item-horario { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+
+        .item-badge {
+            background: #1c1c1c; color: #ccc; padding: 6px 14px;
+            border-radius: 6px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; border: 1px solid #2e2e2e; font-weight: 600;
+        }
+
+        .loading, .no-result { text-align: center; color: #555; padding: 60px; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="brand">Academia Harmonia — Área do Aluno</div>
+        <a href="/" class="btn-home">⌂ Sair (Home)</a>
+    </nav>
+
+    <div class="container">
+        <div class="header-section">
+            <div>
+                <h1>Lista de Alunos</h1>
+                <p>Ordem Alfabética</p>
+            </div>
+            <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Pesquisar aluno..." oninput="filtrarEExibir()">
+        </div>
+
+        <div class="list-container" id="listaAlunos">
+            <div class="loading">Carregando escala...</div>
+        </div>
+    </div>
+
+    <script>
+        let todosAlunos = [];
+
+        async function carregarEscalaPublica() {
+            try {
+                const res = await fetch('/api/alunos');
+                todosAlunos = await res.json();
+                filtrarEExibir();
+            } catch (err) {
+                document.getElementById('listaAlunos').innerHTML = `<div class="loading">Erro ao carregar os dados.</div>`;
+            }
+        }
+
+        function filtrarEExibir() {
+            const termo = document.getElementById('searchInput').value.toLowerCase();
+            
+            // Filtra de acordo com a busca
+            const filtrados = todosAlunos.filter(s => 
+                s.nome.toLowerCase().includes(termo) || s.instrumento.toLowerCase().includes(termo) || s.diaHorario.toLowerCase().includes(termo)
+            );
+
+            // Ordena estritamente em Ordem Alfabética pelo nome (A-Z)
+            filtrados.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+
+            const container = document.getElementById('listaAlunos');
+            container.innerHTML = '';
+
+            if (filtrados.length === 0) {
+                container.innerHTML = `<div class="no-result">Nenhum aluno encontrado.</div>`;
+                return;
+            }
+
+            filtrados.forEach(s => {
+                container.innerHTML += `
+                    <div class="list-item">
+                        <div class="item-info">
+                            <span class="item-nome">${s.nome}</span>
+                            <span class="item-horario">🕒 ${s.diaHorario}</span>
+                        </div>
+                        <div class="item-badge">${s.instrumento}</div>
+                    </div>`;
+            });
+        }
+
+        carregarEscalaPublica();
+    </script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academia Harmonia - Painel Admin</title>
+    <style>
+        :root {
+            --nav-bg: #1e293b;
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; }
+
+        .navbar {
+            background-color: var(--nav-bg); color: white; padding: 15px 30px;
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .navbar .brand { font-size: 1.25rem; font-weight: 700; }
+        .btn-home {
+            background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);
+            padding: 6px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9rem; cursor: pointer; text-decoration: none; transition: background 0.2s;
+        }
+        .btn-home:hover { background: rgba(255,255,255,0.2); }
+
+        .main-container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+        .page-header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .page-header h1 { font-size: 1.75rem; color: var(--text-main); font-weight: 700; }
+        
+        .card-table, .card-form {
+            background: var(--card-bg); border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); padding: 24px; margin-bottom: 30px;
+        }
+        .table-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .table-title { font-size: 1.15rem; font-weight: 600; color: var(--text-main); }
+        .filters-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .filters-group input, .filters-group select {
+            padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; background: #f8fafc;
+        }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
+        th { background-color: #f8fafc; font-weight: 600; color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
+        tr:hover { background-color: #f8fafc; }
+        .badge-status {
+            display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+            border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: #d1fae5; color: #065f46;
+        }
+        .action-btns { display: flex; gap: 8px; }
+        .btn-action { padding: 5px 10px; border-radius: 6px; border: none; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: white; }
+        .btn-edit { background-color: var(--warning); }
+        .btn-edit:hover { background-color: #d97706; }
+        .btn-delete { background-color: var(--danger); }
+        .btn-delete:hover { background-color: #dc2626; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: var(--text-muted); }
+        input, select { padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; outline: none; }
+        .btn-primary {
+            background-color: var(--primary-color); color: white; border: none; padding: 10px 20px;
+            font-weight: 600; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-top: 15px;
+        }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-cancel { background-color: #64748b; margin-left: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="brand">Academia Harmonia — Painel Admin</div>
+        <a href="/" class="btn-home">⌂ Home (Sair)</a>
+    </nav>
+
+    <div class="main-container">
+        <div class="page-header">
+            <h1 id="formTitle">Cadastrar Nova Aula</h1>
+        </div>
+
+        <div class="card-form">
+            <form id="studentForm">
+                <input type="hidden" id="editRowId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nome do Aluno</label>
+                        <input type="text" id="nome" required placeholder="Ex: Sofia Mendes">
+                    </div>
+                    <div class="form-group">
+                        <label>Dia / Horário (Ex: Segunda-Feira 10h)</label>
+                        <input type="text" id="diaHorario" required placeholder="Ex: Segunda-Feira 10h">
+                    </div>
+                    <div class="form-group">
+                        <label>Instrumento</label>
+                        <select id="instrumento" required>
+                            <option value="">Selecione...</option>
+                            <option value="Violão">Violão</option>
+                            <option value="Piano">Piano</option>
+                            <option value="Bateria">Bateria</option>
+                            <option value="Baixo">Baixo</option>
+                            <option value="Contra Baixo">Contra Baixo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Telefone</label>
+                        <input type="text" id="telefone" required placeholder="(33) 99999-9999">
+                    </div>
+                </div>
+                <div>
+                    <button type="submit" class="btn-primary" id="btnSubmit">Salvar na Planilha</button>
+                    <button type="button" class="btn-primary btn-cancel" id="btnCancel" onclick="cancelarEdicao()">Cancelar Edição</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card-table">
+            <div class="table-header-row">
+                <div class="table-title">Lista de Alunos Sincronizados</div>
+                <div class="filters-group">
+                    <input type="text" id="searchName" placeholder="Pesquisar Aluno..." oninput="renderTable()">
+                    <select id="filterInstrument" onchange="renderTable()">
+                        <option value="">Todos os Instrumentos</option>
+                        <option value="Violão">Violão</option>
+                        <option value="Piano">Piano</option>
+                        <option value="Bateria">Bateria</option>
+                        <option value="Baixo">Baixo</option>
+                        <option value="Contra Baixo">Contra Baixo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Aluno</th>
+                            <th>Horário</th>
+                            <th>Instrumento</th>
+                            <th>Telefone</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Carregando dados...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let alunosGlobais = [];
+
+        async function fetchStudents() {
+            try {
+                const res = await fetch('/api/alunos');
+                alunosGlobais = await res.json();
+                renderTable();
+            } catch (err) {
+                console.error("Erro ao carregar:", err);
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            const search = document.getElementById('searchName').value.toLowerCase();
+            const filterInst = document.getElementById('filterInstrument').value;
+
+            const filtered = alunosGlobais.filter(s => s.nome.toLowerCase().includes(search) && (filterInst === "" || s.instrumento === filterInst));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Nenhum aluno encontrado.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach((s, idx) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${idx + 1}</td>
+                        <td><strong>${s.nome}</strong></td>
+                        <td>📅 ${s.diaHorario}</td>
+                        <td>🎸 ${s.instrumento}</td>
+                        <td>📱 ${s.telefone || '-'}</td>
+                        <td><span class="badge-status">● Sincronizado</span></td>
+                        <td>
+                            <div class="action-btns">
+                                <button class="btn-action btn-edit" onclick="prepararEdicao(${s.rowId}, '${s.nome.replace(/'/g, "\\'")}', '${s.diaHorario.replace(/'/g, "\\'")}', '${s.instrumento}', '${s.telefone || ''}')">Editar</button>
+                                <button class="btn-action btn-delete" onclick="deleteStudent(${s.rowId})">Excluir</button>
+                            </div>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        document.getElementById('studentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmit');
+            const rowId = document.getElementById('editRowId').value;
+            const isEditing = rowId !== "";
+
+            btn.disabled = true;
+            btn.textContent = isEditing ? 'Atualizando...' : 'Salvando na Planilha...';
+
+            const payload = {
+                action: isEditing ? "edit" : "add",
+                rowId: isEditing ? parseInt(rowId) : null,
+                nome: document.getElementById('nome').value,
+                diaHorario: document.getElementById('diaHorario').value,
+                instrumento: document.getElementById('instrumento').value,
+                telefone: document.getElementById('telefone').value
+            };
+
+            try {
+                const response = await fetch('/api/alunos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                if(result.result === 'success') {
+                    alert(isEditing ? 'Aluno atualizado com sucesso!' : 'Aluno cadastrado com sucesso!'); 
+                    cancelarEdicao();
+                    fetchStudents();
+                } else {
+                    alert('Erro: ' + result.message);
+                }
+            } catch (err) { 
+                alert('Erro de comunicação.'); 
+            } finally { 
+                btn.disabled = false; 
+                btn.textContent = 'Salvar na Planilha'; 
+            }
+        });
+
+        function prepararEdicao(rowId, nome, diaHorario, instrumento, telefone) {
+            document.getElementById('editRowId').value = rowId;
+            document.getElementById('nome').value = nome;
+            document.getElementById('diaHorario').value = diaHorario;
+            document.getElementById('instrumento').value = instrumento;
+            document.getElementById('telefone').value = telefone;
+
+            document.getElementById('formTitle').innerText = "Editar Aluno / Aula";
+            document.getElementById('btnSubmit').innerText = "Atualizar Registro";
+            document.getElementById('btnCancel').style.display = "inline-block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicao() {
+            document.getElementById('studentForm').reset();
+            document.getElementById('editRowId').value = "";
+            document.getElementById('formTitle').innerText = "Cadastrar Nova Aula";
+            document.getElementById('btnSubmit').innerText = "Salvar na Planilha";
+            document.getElementById('btnCancel').style.display = "none";
+        }
+
+        async function deleteStudent(rowId) {
+            if (!confirm("Deseja realmente remover este aluno?")) return;
+            try {
+                const response = await fetch('/api/alunos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: "delete", rowId })
+                });
+                const result = await response.json();
+                if(result.result === 'success') {
+                    alert('Aluno removido!');
+                    fetchStudents();
+                } else {
+                    alert('Erro ao excluir.');
+                }
+            } catch (err) { 
+                alert('Erro de comunicação.'); 
+            }
+        }
+
+        fetchStudents();
+    </script>
+</body>
+</html>
