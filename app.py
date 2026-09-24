@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from flask import Flask, jsonify, render_template, request
 import requests
 
@@ -22,6 +23,25 @@ def carregar_json():
 def salvar_json(dados):
   with open(JSON_FILE, "w", encoding="utf-8") as f:
     json.dump(dados, f, ensure_ascii=False, indent=4)
+
+
+def gerar_dh_code(texto_dia_horario):
+  """Converte a descrição do dia/horário para o padrão da Coluna B (ex: 1,13).
+
+  Regra: 1 = Segunda, 3 = Terça, 2 = Quarta.
+  """
+  texto = texto_dia_horario.lower().strip()
+  prefixo = "1"  # Padrão Segunda
+
+  if "terça" in texto or "terca" in texto:
+    prefixo = "3"
+  elif "quarta" in texto:
+    prefixo = "2"
+
+  horas_encontradas = re.findall(r"\d+", texto)
+  hora_num = horas_encontradas[0] if horas_encontradas else "0"
+
+  return f"{prefixo},{hora_num}" if horas_encontradas else texto_dia_horario
 
 
 @app.route("/")
@@ -49,7 +69,6 @@ def get_alunos():
   except Exception as e:
     print("Modo Offline / Usando JSON local:", e)
 
-  # Retorna todos os dados para que o Admin gerencie tudo
   return jsonify(carregar_json())
 
 
@@ -59,6 +78,11 @@ def post_alunos():
     req = request.json
     dados_locais = carregar_json()
     acao = req.get("action")
+
+    # Gera o código formatado para a coluna B (ex: 1,13)
+    texto_dia = req.get("diaHorario", "")
+    dh_code_gerado = gerar_dh_code(texto_dia)
+    req["dhCode"] = dh_code_gerado  # Adiciona ao payload enviado para o Apps Script
 
     if acao == "delete":
       row_id = req.get("rowId")
@@ -70,19 +94,21 @@ def post_alunos():
         if s.get("rowId") == row_id:
           s["nome"] = req.get("nome")
           s["diaHorario"] = req.get("diaHorario")
+          s["dhCode"] = dh_code_gerado
           s["instrumento"] = req.get("instrumento")
           s["telefone"] = req.get("telefone", "")
 
     else:  # Novo cadastro
       nuevo_id = (
-        max([s.get("rowId", 0) for s in dados_locais], default=0) + 1
+          max([s.get("rowId", 0) for s in dados_locais], default=0) + 1
       )
       novo_aluno = {
-        "rowId": nuevo_id,
-        "nome": req.get("nome"),
-        "diaHorario": req.get("diaHorario"),
-        "instrumento": req.get("instrumento"),
-        "telefone": req.get("telefone", ""),
+          "rowId": nuevo_id,
+          "nome": req.get("nome"),
+          "diaHorario": req.get("diaHorario"),
+          "dhCode": dh_code_gerado,
+          "instrumento": req.get("instrumento"),
+          "telefone": req.get("telefone", ""),
       }
       dados_locais.append(novo_aluno)
 
