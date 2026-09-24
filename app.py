@@ -46,11 +46,18 @@ def get_alunos():
     data = response.json()
     if isinstance(data, list) and len(data) > 0:
       salvar_json(data)
-      return jsonify(data)
   except Exception as e:
     print("Modo Offline / Usando JSON local:", e)
 
-  return jsonify(carregar_json())
+  dados_brutos = carregar_json()
+
+  # Filtra para retornar APENAS alunos com horário válido (ignora vazios ou "Número Inválido")
+  dados_filtrados = [
+      s for s in dados_brutos 
+      if s.get("diaHorario") and "inválido" not in s.get("diaHorario").lower()
+  ]
+
+  return jsonify(dados_filtrados)
 
 
 @app.route("/api/alunos", methods=["POST"])
